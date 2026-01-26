@@ -60,6 +60,7 @@ if(${ros_environment_FOUND})
             PATTERN ".git" EXCLUDE
         )
 
+        ament_export_dependencies(g3log_ros)
         ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
         ament_export_libraries(oculus)
 
