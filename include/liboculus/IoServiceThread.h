@@ -34,8 +34,6 @@
 #include <memory>
 #include <thread>
 
-#include "g3log/g3log.hpp"
-
 namespace liboculus {
 
 // Generic "worker thread" for boost::asio

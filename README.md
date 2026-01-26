@@ -3,7 +3,7 @@
 
 > [!WARNING]
 >
-> October 2025.  Please note we are entering a period of active development on this repo.   The previous version has been archived as [`v1.2.0`](https://github.com/apl-ocean-engineering/liboculus/tree/v1.2.0).  Going forward we expect to make breaking changes.
+> Janauary  2026.  Please note we are in a period of active development on this repo.   The previous version has been archived as [`v1.2.0`](https://github.com/apl-ocean-engineering/liboculus/tree/v1.2.0).  Going forward we expect to make breaking changes.
 
 (No, sadly, not that kind of [Oculus](https://www.oculus.com/))
 
@@ -33,17 +33,6 @@ This is a hybrid repository which builds in either ROS1 or ROS2, though there ar
 
 We hope the code is still useful for others looking to talk to the Oculus.
 
-> [!NOTE] [fips](http://floooh.github.io/fips/) support has been removed from this branch.
-
-The primary dependency is on [g3log](https://github.com/KjellKod/g3log).
-* If using either ROS1 or ROS2, use the provided `liboculus.rosinstall` file:
-
-```
-cd <catkin_ws>/src`; `vcs import --recursive --input liboculus/liboculus.repos
-```
-
-The `main` branch of `g3log_ros` is also a ROS1-ROS2 hybrid.
-
 The (optional) test suite also requires Googletest and the (also optional)
 binary `oc_client` requires [CLI11](https://github.com/CLIUtils/CLI11).
 
@@ -61,6 +50,29 @@ make
 ```
 
 Note the `CMakelists.txt` attempts to auto-detect ROS.  Cmake build should be done in a session where ROS has not been loaded.
+
+## Logging
+
+> [!NOTE] [fips](http://floooh.github.io/fips/) support has been removed from this version.
+> [!NOTE] The dependency on [g3log](https://github.com/KjellKod/g3log) has been removed.
+
+Internally the library uses [spdlog](https://github.com/gabime/spdlog).  By default logger `"liboculus"` does not have any registered sinks and does not output to the console.
+
+If the calling application uses spdlog, either the library's logger can be reset:
+
+```
+liboculus::Logger::set_logger( spdlog::default_logger() );
+```
+
+or a sink can be added to the library's logger:
+
+```
+auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt >();  liboculus::Logger::add_sink( stdout_sink );
+```
+
+
+
+
 
 ---
 ## oc_client binary
@@ -143,3 +155,7 @@ Other files/classes:
 This code is released under the [BSD 3-clause license](LICENSE).
 
 This repository contains one file provided by Blueprint as part of their free "Oculus Viewer" sample application: ([include/liboculus/thirdparty/Oculus/Oculus.h](thirdpart/Oculus/Oculus.h)).  It describes their protocol and data formats.   This file is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+It includes the header-only version of [CLI11](https://github.com/CLIUtils/CLI11) at [`include/liboculus/thirdparty/CLI11/`](include/liboculus/thirdparty/CLI11/)
+
+It includes the header-only version of TartanLlama's [`expected` implementation](https://github.com/TartanLlama/expected) at [`include/liboculus/thirdparty/expected.hpp`](include/liboculus/thirdparty/expected.hpp)

@@ -36,7 +36,6 @@
 #include <mutex>
 #include <thread>
 
-#include "g3log/g3log.hpp"
 #include "liboculus/DataTypes.h"
 #include "liboculus/thirdparty/Oculus/Oculus.h"
 
@@ -54,7 +53,7 @@ public:
   bool valid() const { return true; } // todo:  actually validate the packet
 
   // Print most recent OculusStatusMsg to LOG(DEBUG)
-  void dump() const;
+  std::vector<std::string> dump(std::vector<std::string> &vec) const;
 
   boost::asio::ip::address ipAddr() const;
   uint32_t status() const { return msg()->status; }

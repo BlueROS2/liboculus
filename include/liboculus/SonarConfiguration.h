@@ -93,7 +93,7 @@ public:
   bool getSimpleReturn() const { return _simpleReturn; }
   bool getGainAssistance() const { return _gainAssistance; }
 
-  void dump() const;
+  std::vector<std::string> dump(std::vector<std::string> &) const;
 
 private:
   void updateFlags() const;

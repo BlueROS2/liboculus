@@ -31,7 +31,7 @@
 #pragma once
 
 #include <cassert>
-#include <g3log/g3log.hpp>
+#include <fmt/format.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -78,7 +78,7 @@ public:
 
   const OculusSimpleFireFlags &flags() const { return _flags; }
 
-  void dump() const override;
+  std::vector<std::string> dump(std::vector<std::string> &vec) const override;
 
   float range() const;
 
@@ -93,27 +93,34 @@ SimpleFireMessage<FireMsgT>::SimpleFireMessage(
   assert(buffer->size() >= sizeof(FireMsgT));
 }
 
-template <typename FireMsgT> void SimpleFireMessage<FireMsgT>::dump() const {
-  MessageHeader::dump();
+template <typename FireMsgT>
+std::vector<std::string>
+SimpleFireMessage<FireMsgT>::dump(std::vector<std::string> &vec) const {
+  MessageHeader::dump(vec);
 
-  LOG(DEBUG) << "        Mode: "
-             << FreqModeToString(this->fireMsg()->masterMode);
+  vec.push_back(fmt::format("        Mode: {}",
+                            FreqModeToString(this->fireMsg()->masterMode)));
 
   const int pingRate = PingRateToHz(this->fireMsg()->pingRate);
   if (pingRate >= 0) {
-    LOG(DEBUG) << "   Ping rate: " << pingRate;
+    vec.push_back(fmt::format("   Ping rate: {}", pingRate));
   } else {
-    LOG(DEBUG) << "   Ping rate: (unknown) "
-               << static_cast<int>(this->fireMsg()->pingRate);
+    vec.push_back(fmt::format("   Ping rate: (unknown) ({})",
+                              static_cast<int>(this->fireMsg()->pingRate)));
   }
 
-  LOG(DEBUG) << "Flags: Send gain: "
-             << (this->flags().getSendGain() ? "Yes" : "No");
-  LOG(DEBUG) << "Flags:  Range is: "
-             << (this->flags().getRangeAsMeters() ? "Meters" : "Percent");
-  LOG(DEBUG) << "       Range: " << range();
-  LOG(DEBUG) << "Speed of sound: " << this->fireMsg()->speedOfSound;
-  LOG(DEBUG) << "      Gain pct: " << this->fireMsg()->gainPercent;
+  vec.push_back(fmt::format("Flags: Send gain: {}",
+                            (this->flags().getSendGain() ? "Yes" : "No")));
+  vec.push_back(
+      fmt::format("Flags:  Range is: {}",
+                  (this->flags().getRangeAsMeters() ? "Meters" : "Percent")));
+  vec.push_back(fmt::format("           Range: {} m", range()));
+  vec.push_back(
+      fmt::format("  Speed of sound: {} m/s", this->fireMsg()->speedOfSound));
+  vec.push_back(
+      fmt::format("        Gain pct: {}", this->fireMsg()->gainPercent));
+
+  return vec;
 }
 
 } // namespace liboculus

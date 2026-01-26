@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include <g3log/g3log.hpp> // needed for CHECK macro
+#include <stdexcept>
 
 #include "liboculus/DataTypes.h"
 #include "liboculus/thirdparty/Oculus/Oculus.h"
@@ -54,7 +54,8 @@ public:
   //   "The bearings to each of the beams in 0.01 degree resolution"
   //
   float at(unsigned int i) const {
-    CHECK(i < _numBeams) << "Requested beam " << i << " out of range";
+    if (i >= _numBeams)
+      throw std::out_of_range("Requested bearing ouf o range");
     return _data[i] / 100.0;
   }
 

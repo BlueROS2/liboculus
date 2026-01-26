@@ -30,7 +30,7 @@
 
 #include "liboculus/SonarStatus.h"
 
-#include "g3log/g3log.hpp"
+#include <fmt/format.h>
 
 namespace liboculus {
 
@@ -44,33 +44,40 @@ boost::asio::ip::address SonarStatus::ipAddr() const {
   return address_v4(ntohl(msg()->ipAddr));
 }
 
-void SonarStatus::dump() const {
-  LOG(DEBUG) << "Device id " << msg()->deviceId
-             << " ; type: " << (uint16_t)msg()->deviceType
-             << " ; part num: " << (uint16_t)msg()->partNumber;
+std::vector<std::string>
+SonarStatus::dump(std::vector<std::string> &vec) const {
 
-  // LOG(DEBUG) << "        Received at: " << _msgTime;
-  LOG(DEBUG) << "             Status: " << std::hex << msg()->status;
-  LOG(DEBUG) << "      Sonar ip addr: "
-             << boost::asio::ip::address_v4(ntohl(msg()->ipAddr));
-  LOG(DEBUG) << " Sonar connected to: "
-             << boost::asio::ip::address_v4(ntohl(msg()->connectedIpAddr));
+  vec.push_back(fmt::format("Device id: {}; type: {}; part num: {}",
+                            msg()->deviceId,
+                            static_cast<uint16_t>(msg()->deviceType),
+                            static_cast<uint16_t>(msg()->partNumber)));
 
-  LOG(DEBUG) << "Versions:";
-  LOG(DEBUG) << "   firmwareVersion0: " << std::hex
-             << msg()->versionInfo.firmwareVersion0;
-  LOG(DEBUG) << "      firmwareDate0: " << std::hex
-             << msg()->versionInfo.firmwareDate0;
+  // vec.push_back( fmt::format("        Received at: {}", _msgTime));
+  vec.push_back(fmt::format("             Status: {:#04x}", msg()->status));
+  vec.push_back(fmt::format(
+      "      Sonar ip addr: {}",
+      boost::asio::ip::address_v4(ntohl(msg()->ipAddr)).to_string()));
+  vec.push_back(fmt::format(
+      " Sonar connected to: {}",
+      boost::asio::ip::address_v4(ntohl(msg()->connectedIpAddr)).to_string()));
 
-  LOG(DEBUG) << "   firmwareVersion1: " << std::hex
-             << msg()->versionInfo.firmwareVersion1;
-  LOG(DEBUG) << "      firmwareDate1: " << std::hex
-             << msg()->versionInfo.firmwareDate1;
+  vec.push_back("Versions:");
+  vec.push_back(fmt::format("   firmwareVersion0: {:#04x}",
+                            msg()->versionInfo.firmwareVersion0));
+  vec.push_back(fmt::format("      firmwareDate0: {:#04x}",
+                            msg()->versionInfo.firmwareDate0));
 
-  LOG(DEBUG) << "   firmwareVersion2: " << std::hex
-             << msg()->versionInfo.firmwareVersion2;
-  LOG(DEBUG) << "      firmwareDate2: " << std::hex
-             << msg()->versionInfo.firmwareDate2;
+  vec.push_back(fmt::format("   firmwareVersion1: {:#04x}",
+                            msg()->versionInfo.firmwareVersion1));
+  vec.push_back(fmt::format("      firmwareDate1: {:#04x}",
+                            msg()->versionInfo.firmwareDate1));
+
+  vec.push_back(fmt::format("   firmwareVersion2: {:#04x}",
+                            msg()->versionInfo.firmwareVersion2));
+  vec.push_back(fmt::format("      firmwareDate2: {:#04x}",
+                            msg()->versionInfo.firmwareDate2));
+
+  return vec;
 }
 
 } // namespace liboculus

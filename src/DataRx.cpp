@@ -29,8 +29,8 @@
  */
 
 #include "liboculus/DataRx.h"
-
 #include "liboculus/Constants.h"
+#include "liboculus/Logger.h"
 
 namespace liboculus {
 
@@ -50,7 +50,8 @@ void DataRx::connect(const asio::ip::address &addr) {
   uint16_t port = liboculus::DataPort;
 
   boost::asio::ip::tcp::endpoint sonarEndpoint(addr, port);
-  LOG(DEBUG) << "Attempting to connect to sonar at " << sonarEndpoint;
+  oclog::debug("Attempting to connect to sonar at {}:{}", addr.to_string(),
+               port);
   is_connected_.set(true);
 
   _socket.async_connect(sonarEndpoint, std::bind(&DataRx::onConnect, this,
@@ -66,7 +67,7 @@ void DataRx::connect(const std::string &strAddr) {
 
 void DataRx::onConnect(const boost::system::error_code &ec) {
   if (ec) {
-    LOG(DEBUG) << "Error on connect: " << ec.message();
+    // LOG(DEBUG) << "Error on connect: " << ec.message();
     disconnect();
     return;
   } else if (!isConnected()) {
@@ -74,14 +75,14 @@ void DataRx::onConnect(const boost::system::error_code &ec) {
     return;
   }
 
-  LOG(INFO) << "Successful connection to sonar!";
+  // LOG(INFO) << "Successful connection to sonar!";
   restartReceiveCycle();
   if (_onConnectCallback)
     _onConnectCallback();
 }
 
 void DataRx::disconnect() {
-  LOG(DEBUG) << " ... disconnecting";
+  // LOG(DEBUG) << " ... disconnecting";
   _socket.close();
   is_connected_.set(false);
   if (_onDisconnectCallback)
@@ -92,10 +93,11 @@ void DataRx::onTimeout(const boost::system::error_code &ec) {
   if (ec == boost::asio::error::operation_aborted) {
     return;
   } else if (ec) {
-    LOG(WARNING) << "Error on timeout " << ec.message();
+    // LOG(WARNING) << "Error on timeout " << ec.message();
   }
-  LOG(DEBUG) << "!! No data from sonar in " << timeout_secs_
-             << " seconds, timeout";
+
+  // LOG(DEBUG) << "!! No data from sonar in " << timeout_secs_
+  //            << " seconds, timeout";
   if (_onTimeoutCallback)
     _onTimeoutCallback();
 }
@@ -113,7 +115,7 @@ void DataRx::readUpTo(size_t bytes, StateMachineCallback callback) {
 }
 
 void DataRx::restartReceiveCycle() {
-  LOG(DEBUG) << "== Restarting DataRx state machine ==";
+  // LOG(DEBUG) << "== Restarting DataRx state machine ==";
 
   // Before abandoning the current data, post that it's been received
   if (_buffer->size() > 0)
@@ -141,12 +143,12 @@ void DataRx::restartReceiveCycle() {
 void DataRx::rxFirstByteOculusId(const boost::system::error_code &ec,
                                  std::size_t bytes_transferred) {
   if (ec.value() == boost::asio::error::basic_errors::operation_aborted) {
-    LOG(DEBUG) << "Receive cancelled, giving up...";
+    // LOG(DEBUG) << "Receive cancelled, giving up...";
     return;
   } else if (ec) {
     // Failure of this first read usually indicates a network failure
-    LOG(WARNING) << "Error on receive of header: " << ec.value() << " "
-                 << ec.message();
+    // LOG(WARNING) << "Error on receive of header: " << ec.value() << " "
+    //              << ec.message();
     disconnect();
     return;
   }
@@ -167,11 +169,11 @@ void DataRx::rxFirstByteOculusId(const boost::system::error_code &ec,
 void DataRx::rxSecondByteOculusId(const boost::system::error_code &ec,
                                   std::size_t bytes_transferred) {
   if (ec.value() == boost::asio::error::basic_errors::operation_aborted) {
-    LOG(DEBUG) << "Receive ancelled, giving up...";
+    // LOG(DEBUG) << "Receive cancelled, giving up...";
     return;
   } else if (ec) {
-    LOG(WARNING) << "Error on receive of header: " << ec.value() << " "
-                 << ec.message();
+    // LOG(WARNING) << "Error on receive of header: " << ec.value() << " "
+    //              << ec.message();
     goto exit;
   }
 
@@ -180,7 +182,7 @@ void DataRx::rxSecondByteOculusId(const boost::system::error_code &ec,
   }
 
   if (_buffer->data()[1] == liboculus::PacketHeaderMSB) {
-    LOG(DEBUG) << "Received good OculusId at start of packet";
+    // LOG(DEBUG) << "Received good OculusId at start of packet";
 
     readUpTo(sizeof(OculusMessageHeader),
              std::bind(&DataRx::rxHeader, this, std::placeholders::_1,
@@ -195,30 +197,30 @@ exit:
 void DataRx::rxHeader(const boost::system::error_code &ec,
                       std::size_t bytes_transferred) {
   if (ec.value() == boost::asio::error::basic_errors::operation_aborted) {
-    LOG(DEBUG) << "Receive cancelled, giving up...";
+    // LOG(DEBUG) << "Receive cancelled, giving up...";
     return;
   } else if (ec) {
-    LOG(WARNING) << "Error on receive of header: " << ec.value() << " "
-                 << ec.message();
+    // LOG(WARNING) << "Error on receive of header: " << ec.value() << " "
+    //              << ec.message();
     return;
   }
 
   if (bytes_transferred != (sizeof(OculusMessageHeader) - sizeof(uint16_t))) {
-    LOG(WARNING) << "Received short header of " << bytes_transferred
-                 << " expected " << sizeof(OculusMessageHeader);
+    // LOG(WARNING) << "Received short header of " << bytes_transferred
+    //              << " expected " << sizeof(OculusMessageHeader);
     restartReceiveCycle();
   }
 
   MessageHeader hdr(_buffer);
 
   if (!hdr.valid()) {
-    LOG(WARNING) << "!!! Received invalid header...";
+    // LOG(WARNING) << "!!! Received invalid header...";
     restartReceiveCycle();
     return;
   }
 
-  LOG(DEBUG) << "Got message ID " << static_cast<int>(hdr.msgId()) << " ("
-             << MessageTypeToString(hdr.msgId()) << ")";
+  // LOG(DEBUG) << "Got message ID " << static_cast<int>(hdr.msgId()) << " ("
+  //            << MessageTypeToString(hdr.msgId()) << ")";
 
   // hdr.dump();
 
@@ -232,17 +234,17 @@ void DataRx::rxPacket(const boost::system::error_code &ec,
   MessageHeader hdr(_buffer);
 
   if (ec.value() == boost::asio::error::basic_errors::operation_aborted) {
-    LOG(DEBUG) << "Receive cancelled, giving up...";
+    // LOG(DEBUG) << "Receive cancelled, giving up...";
     return;
   } else if (ec) {
-    LOG(WARNING) << "Error on receive of packet data: " << ec.value() << " "
-                 << ec.message();
+    // LOG(WARNING) << "Error on receive of packet data: " << ec.value() << " "
+    //              << ec.message();
     goto exit;
   }
 
   if (bytes_transferred < hdr.payloadSize()) {
-    LOG(WARNING) << "Received short header of " << bytes_transferred
-                 << ", expected " << hdr.payloadSize();
+    // LOG(WARNING) << "Received short header of " << bytes_transferred
+    //              << ", expected " << hdr.payloadSize();
     goto exit;
   }
 
@@ -252,39 +254,39 @@ void DataRx::rxPacket(const boost::system::error_code &ec,
 
       if (ping.valid()) {
         if (bytes_transferred < ping.payloadSize()) {
-          LOG(WARNING) << "Did not read full data packet, resetting...";
+          // LOG(WARNING) << "Did not read full data packet, resetting...";
           goto exit;
         }
 
         callback(ping);
       } else {
-        LOG(WARNING) << "Incoming packet invalid";
+        // LOG(WARNING) << "Incoming packet invalid";
       }
     } else if (hdr.msgVersion() == 2) {
       SimplePingResultV2 ping(_buffer);
 
       if (ping.valid()) {
         if (bytes_transferred < ping.payloadSize()) {
-          LOG(WARNING) << "Did not read full data packet, resetting...";
+          // LOG(WARNING) << "Did not read full data packet, resetting...";
           goto exit;
         }
 
         callback(ping);
-      } else {
-        LOG(WARNING) << "Incoming packet invalid";
+        // } else {
+        //   LOG(WARNING) << "Incoming packet invalid";
       }
     } else {
-      LOG(WARNING) << "Unknown message version " << hdr.msgVersion()
-                   << " ignoring";
+      // LOG(WARNING) << "Unknown message version " << hdr.msgVersion()
+      //              << " ignoring";
     }
 
   } else if (hdr.msgId() == messageLogs) {
-    LOG(DEBUG) << "Received " << bytes_transferred << " of LogMessage data";
-    LOG(INFO) << std::string(_buffer->begin() + sizeof(OculusMessageHeader),
-                             _buffer->end());
+    // LOG(DEBUG) << "Received " << bytes_transferred << " of LogMessage data";
+    // LOG(INFO) << std::string(_buffer->begin() + sizeof(OculusMessageHeader),
+    //                          _buffer->end());
   } else {
-    LOG(DEBUG) << "Ignoring " << MessageTypeToString(hdr.msgId())
-               << " message, id " << static_cast<int>(hdr.msgId());
+    // LOG(DEBUG) << "Ignoring " << MessageTypeToString(hdr.msgId())
+    //            << " message, id " << static_cast<int>(hdr.msgId());
   }
 
 exit:

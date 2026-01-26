@@ -33,9 +33,6 @@
 
 #pragma once
 
-#include <g3log/g3log.hpp> // needed for CHECK macro
-#include <iostream>
-
 #include "DataTypes.h"
 #include "liboculus/thirdparty/Oculus/Oculus.h"
 
@@ -62,15 +59,15 @@ public:
   uint16_t nBeams() const { return _numBeams; }
 
   uint8_t at_uint8(unsigned int beam, unsigned int rangeBin) const {
-    CHECK(_dataSize == 1)
-        << "This function can only handle 8-bit data, use at_uint16()";
+    // CHECK(_dataSize == 1)
+    //     << "This function can only handle 8-bit data, use at_uint16()";
     if ((_data == nullptr) || (beam >= _numBeams) || (rangeBin >= _numRanges)) {
       return 0;
     }
 
     // Simplified calculation assumes 1-byte data
     const size_t index = rangeBin * _stride + beam + _offset;
-    CHECK(index < _imageSize);
+    assert(index < _imageSize);
     return ((uint8_t *)_data)[index];
   }
 
@@ -85,7 +82,7 @@ public:
       return at_uint8(beam, rangeBin);
     } else if (_dataSize == 2) {
       const size_t offset = (rangeBin * _stride) + (beam * _dataSize) + _offset;
-      CHECK(offset < (_imageSize - 1));
+      assert(offset < (_imageSize - 1));
       return (_data[offset] | _data[offset + 1] << 8);
     }
 
@@ -105,7 +102,7 @@ public:
       return at_uint16(beam, rangeBin);
     } else {
       const size_t offset = (rangeBin * _stride) + (beam * _dataSize) + _offset;
-      CHECK(offset < (_imageSize - 1));
+      assert(offset < (_imageSize - 1));
 
       // \todo.  Come to think of it, this could be done by mapping the 4 bytes
       // into a uin32 then maybe using a system call to swap endianness?

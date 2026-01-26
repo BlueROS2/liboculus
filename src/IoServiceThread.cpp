@@ -28,9 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
-
 #include "liboculus/IoServiceThread.h"
+#include "liboculus/Logger.h"
 
 namespace liboculus {
 
@@ -73,8 +72,8 @@ void IoServiceThread::threadExec() {
   try {
     _context->run();
   } catch (std::exception &ex) {
-    std::cerr << "!! Unhandled ASIO exception in IoServiceThread: " << ex.what()
-              << std::endl;
+    oclog::error("!! Unhandled ASIO exception in IoServiceThread: {}",
+                 ex.what());
   }
 }
 

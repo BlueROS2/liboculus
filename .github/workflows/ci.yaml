@@ -15,9 +15,11 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - {UPSTREAM_WORKSPACE: liboculus.repos, ROS_DISTRO: noetic}
-          - {UPSTREAM_WORKSPACE: liboculus.repos, ROS_DISTRO: kilted}
-          - {UPSTREAM_WORKSPACE: liboculus.repos, ROS_DISTRO: rolling}
+          - {ROS_DISTRO: noetic}
+          # We include humble because there are still 22.04 systems (Jetson) out there
+          - {ROS_DISTRO: humble}
+          - {ROS_DISTRO: kilted}
+          - {ROS_DISTRO: rolling}
 
     steps:
       - name: Checkout repository
