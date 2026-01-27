@@ -61,7 +61,6 @@ SonarStatus::dump(std::vector<std::string> &vec) const {
       " Sonar connected to: {}",
       boost::asio::ip::address_v4(ntohl(msg()->connectedIpAddr)).to_string()));
 
-  vec.push_back("Versions:");
   vec.push_back(fmt::format("   firmwareVersion0: {:#04x}",
                             msg()->versionInfo.firmwareVersion0));
   vec.push_back(fmt::format("      firmwareDate0: {:#04x}",

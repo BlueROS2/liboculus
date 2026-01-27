@@ -99,12 +99,13 @@ void StatusRx::handleRead(const boost::system::error_code &ec,
 
   SonarStatus status(_buffer);
 
-  std::vector<std::string> dump_vec;
-  status.dump(dump_vec);
+  // Uncomment to dump every status packet
+  // std::vector<std::string> dump_vec;
+  // status.dump(dump_vec);
 
-  for (auto const &l : dump_vec) {
-    oclog::info("Status: {}", l);
-  }
+  // for (auto const &l : dump_vec) {
+  //   oclog::info("Status: {}", l);
+  // }
 
   auto is_good = parseStatus(status);
 
