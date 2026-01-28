@@ -35,6 +35,7 @@
 #include <spdlog/common.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
+#include <utility>
 
 namespace liboculus {
 
@@ -61,7 +62,7 @@ public:
     Logger::get_logger()->sinks().push_back(s);
   }
 
-  ~Logger() {};
+  ~Logger() {}
 
 private:
   static std::shared_ptr<Logger>
@@ -70,12 +71,13 @@ private:
     return std::shared_ptr<Logger>(new Logger(logger_in));
   }
 
-  Logger(const std::shared_ptr<spdlog::logger> &l = nullptr) : logger_(l) {
+  explicit Logger(const std::shared_ptr<spdlog::logger> &l = nullptr)
+      : logger_(l) {
     if (!logger_) {
       logger_ = std::make_shared<spdlog::logger>("liboculus");
       spdlog::register_logger(logger_);
     }
-  };
+  }
 
   std::shared_ptr<spdlog::logger> logger_;
 

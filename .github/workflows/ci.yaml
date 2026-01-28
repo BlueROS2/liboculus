@@ -15,20 +15,15 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - {ROS_DISTRO: noetic}
+          # You need a more modern version of spdlog than provided
+          # by 20.04;  in development could get it from a backports PPA
+          # but can't during CI
+          #- {ROS_DISTRO: noetic}
           - {ROS_DISTRO: jazzy}
           - {ROS_DISTRO: kilted}
           - {ROS_DISTRO: rolling}
 
     steps:
-      - name: Install dependencies with awalsh128/cache-apt-pkgs-action
-        uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libboost-all-dev libspdlog-dev libfmt-dev
-          # Need a more modern version of spdlog than provided by 20.04
-          add-repository: ppa:savoury1/backports
-          version: 1.1
-
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
