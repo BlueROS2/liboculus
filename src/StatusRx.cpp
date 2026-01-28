@@ -29,6 +29,7 @@
  */
 
 #include "liboculus/StatusRx.h"
+#include "liboculus/Logger.h"
 
 #include <arpa/inet.h>
 #include <string.h>
@@ -36,7 +37,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include "g3log/g3log.hpp"
 #include "liboculus/Constants.h"
 
 namespace liboculus {
@@ -67,14 +67,14 @@ void StatusRx::doConnect() {
     _socket.bind(local);
     scheduleRead();
   } else {
-    LOG(WARNING) << "Unable to start reader";
+    oclog::warn("Unable to start reader");
   }
 }
 
 void StatusRx::scheduleRead() {
   // Start an asynchronous receive
   _buffer.resize(sizeof(OculusStatusMsg));
-  LOG(DEBUG) << "Waiting for status packet...";
+  oclog::trace("Waiting for status packet...");
   _socket.async_receive(boost::asio::buffer(_buffer),
                         std::bind(&StatusRx::handleRead, this,
                                   std::placeholders::_1,
@@ -84,22 +84,29 @@ void StatusRx::scheduleRead() {
 void StatusRx::handleRead(const boost::system::error_code &ec,
                           std::size_t bytes_transferred) {
   if (ec) {
-    LOG(WARNING) << "Error on receive: " << ec.message();
+    oclog::warn("Error on receive: {}", ec.message());
     scheduleRead();
   }
 
-  LOG(DEBUG) << "Read " << bytes_transferred << " bytes";
+  oclog::trace("Read {} bytes", bytes_transferred);
 
   if (bytes_transferred != sizeof(OculusStatusMsg)) {
-    LOG(WARNING) << "Got " << bytes_transferred
-                 << " bytes, expected OculusStatusMsg of size "
-                 << sizeof(OculusStatusMsg);
+    oclog::warn("Got {} bytes, expected OculusStatusMsg of size ",
+                bytes_transferred, sizeof(OculusStatusMsg));
     _num_invalid_rx++;
     return;
   }
 
   SonarStatus status(_buffer);
-  status.dump();
+
+  // Uncomment to dump every status packet
+  // std::vector<std::string> dump_vec;
+  // status.dump(dump_vec);
+
+  // for (auto const &l : dump_vec) {
+  //   oclog::info("Status: {}", l);
+  // }
+
   auto is_good = parseStatus(status);
 
   if (_sonarStatusCallback) {
@@ -121,10 +128,10 @@ bool StatusRx::parseStatus(const SonarStatus &status) {
     bool checkPause = false;
 
     if (mst == oculusMasterStatusSsblBoot) {
-      LOG(WARNING) << "Error: SSBL Bootloader";
+      oclog::warn("Error: SSBL Bootloader");
       checkPause = true;
     } else if (mst == oculusMasterStatusSsblRun) {
-      LOG(WARNING) << "Error: SSBL Run";
+      oclog::warn("Error: SSBL Run");
       checkPause = true;
     }
     /*
@@ -141,22 +148,21 @@ bool StatusRx::parseStatus(const SonarStatus &status) {
           (OculusPauseReasonType)((status_flags & 0x38) >> 3);
 
       if (prt == oculusPauseMagSwitch) {
-        LOG(FATAL) << "Halt: Mag Switch Detected";
+        oclog::error("Halt: Mag Switch Detected");
       } else if (prt == oculusPauseBootFromMain) {
-        LOG(FATAL) << "Halt: Boot From Main";
+        oclog::error("Halt: Boot From Main");
       } else if (prt == oculusPauseFlashError) {
-        LOG(FATAL) << "Halt: Flash Error. Update firmware";
+        oclog::error("Halt: Flash Error. Update firmware");
       } else if (prt == oculusPauseJtagLoad) {
-        LOG(FATAL) << "Halt: JTAG Load";
+        oclog::error("Halt: JTAG Load");
       } else if (prt == oculusPauseFirmwareError) {
-        LOG(FATAL) << "Halt: Firmware error";
+        oclog::error("Halt: Firmware error");
       } else if (prt == oculusPauseCompatibilityError) {
-        LOG(FATAL) << "Halt: Compatibility error";
+        oclog::error("Halt: Compatibility error");
       } else if (prt == oculusPauseBrownout) {
-        LOG(FATAL) << "Halt: Brownout";
+        oclog::error("Halt: Brownout");
       } else {
-        LOG(FATAL) << "Halt: unknown error (0x" << std::hex
-                   << static_cast<int>(prt) << ")";
+        oclog::error("Halt: unknown error ({:#4x})", static_cast<int>(prt));
       }
 
       return false;
@@ -167,15 +173,15 @@ bool StatusRx::parseStatus(const SonarStatus &status) {
     const bool highTemp = (status_flags & (1 << 14));
 
     if (overTempShutdown) {
-      LOG(WARNING) << "Warning: High Temp - Pings Stopped";
+      oclog::error("Warning: High Temp - Pings Stopped");
       return false;
     } else if (highTemp) {
-      LOG(WARNING) << "Warning: High Temperature";
+      oclog::error("Warning: High Temperature");
     }
 
     const bool transmitError = (status_flags & (1 << 16));
     if (transmitError) {
-      LOG(FATAL) << "Critical: Transmit Circuit Failure";
+      oclog::error("Critical: Transmit Circuit Failure");
       return false;
     }
   }

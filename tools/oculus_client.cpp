@@ -5,13 +5,14 @@
 
 using std::string;
 
-#include <libg3logger/g3logger.h>
-
-#include <CLI/CLI.hpp>
+#include "liboculus/thirdparty/CLI11/CLI11.hpp"
 #include <boost/asio.hpp>
+
+#include "spdlog/spdlog.h"
 
 #include "liboculus/DataRx.h"
 #include "liboculus/IoServiceThread.h"
+#include "liboculus/Logger.h"
 #include "liboculus/PingAgreesWithConfig.h"
 #include "liboculus/SonarPlayer.h"
 #include "liboculus/StatusRx.h"
@@ -28,6 +29,8 @@ using liboculus::SonarPlayerBase;
 using liboculus::SonarStatus;
 using liboculus::StatusRx;
 // using liboculus::SonarPlayer;
+
+using std::cout;
 
 int playbackSonarFile(const std::string &filename, ofstream &output,
                       int stopAfter = -1);
@@ -55,7 +58,17 @@ double mean_image_intensity(const liboculus::ImageData &imageData) {
 }
 
 int main(int argc, char **argv) {
-  libg3logger::G3Logger logger("ocClient");
+
+  // Configure both liboculus and occlient to use the same
+  // sink to stdout
+  auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+
+  liboculus::Logger::add_sink(stdout_sink);
+  spdlog::set_default_logger(
+      std::make_shared<spdlog::logger>("occlient", stdout_sink));
+
+  // Or simpler, tell liboculus to use the default logger
+  // liboculus::Logger::set_logger( spdlog::default_logger() );
 
   CLI::App app{"Simple Oculus Sonar app"};
 
@@ -92,36 +105,35 @@ int main(int argc, char **argv) {
   CLI11_PARSE(app, argc, argv);
 
   if (verbosity == 1) {
-    logger.setLevel(INFO);
+    spdlog::set_level(spdlog::level::debug);
   } else if (verbosity > 1) {
-    logger.setLevel(DEBUG);
+    spdlog::set_level(spdlog::level::trace);
   }
 
   if ((bitDepth != 8) && (bitDepth != 16) && (bitDepth != 32)) {
-    LOG(FATAL) << "Invalid bit depth " << bitDepth;
+    spdlog::error("Invalid bit depth {}", bitDepth);
     exit(-1);
   }
 
   if ((gain < 1) || (gain > 100)) {
-    LOG(FATAL) << "Invalid gain " << gain
-               << "; should be in the range of 1-100";
+    spdlog::error("Invalid gain {}; should be in the range of 1-100", gain);
   }
 
   ofstream output;
 
   if (!outputFilename.empty()) {
-    LOG(DEBUG) << "Opening output file " << outputFilename;
+    spdlog::debug("Opening output file {}", outputFilename);
     output.open(outputFilename, ios_base::binary | ios_base::out);
 
     if (!output.is_open()) {
-      LOG(WARNING) << "Unable to open " << outputFilename << " for output.";
+      spdlog::error("Unable to open {} for output.", outputFilename);
       exit(-1);
     }
   }
 
   // If playing back an input file, run a different main loop ...
   if (!inputFilename.empty()) {
-    LOG(INFO) << "Playing back file " << inputFilename;
+    spdlog::info("Playing back file {}", inputFilename);
     playbackSonarFile(inputFilename, output, stopAfter);
     return 0;
   }
@@ -130,15 +142,15 @@ int main(int argc, char **argv) {
 
   signal(SIGHUP, signalHandler);
 
-  LOG(DEBUG) << "Starting loop";
+  spdlog::debug("Starting loop");
 
   SonarConfiguration config;
   config.setPingRate(pingRateNormal);
 
-  LOG(INFO) << "Setting range to " << range;
+  spdlog::info("Setting range to {}", range);
   config.setRange(range);
 
-  LOG(INFO) << "Setting gain to " << gain;
+  spdlog::info("Setting gain to {}", gain);
   config.setGainPercent(gain).noGainAssistance();
 
   if (bitDepth == 8) {
@@ -162,11 +174,16 @@ int main(int argc, char **argv) {
         {
           const auto valid = checkPingAgreesWithConfig(ping, config);
           if (!valid) {
-            LOG(WARNING) << "Mismatch between requested config and ping";
+            spdlog::warn("Mismatch between requested config and ping");
           }
         }
 
-        ping.dump();
+        std::vector<std::string> dump_vec;
+        ping.dump(dump_vec);
+
+        for (auto const &l : dump_vec) {
+          spdlog::debug("PingV1: {}", l);
+        }
 
         if (output.is_open()) {
           const char *cdata =
@@ -174,8 +191,8 @@ int main(int argc, char **argv) {
           output.write(cdata, ping.buffer()->size());
         }
 
-        LOG(DEBUG) << "Average intensity: "
-                   << mean_image_intensity(ping.image());
+        spdlog::info("Average intensity: ()",
+                     mean_image_intensity(ping.image()));
 
         count++;
         if ((stopAfter > 0) && (count >= stopAfter))
@@ -191,11 +208,16 @@ int main(int argc, char **argv) {
         {
           const auto valid = checkPingAgreesWithConfig(ping, config);
           if (!valid) {
-            LOG(WARNING) << "Mismatch between requested config and ping";
+            spdlog::warn("Mismatch between requested config and ping");
           }
         }
 
-        ping.dump();
+        std::vector<std::string> dump_vec;
+        ping.dump(dump_vec);
+
+        for (auto const &l : dump_vec) {
+          spdlog::debug("PingV2: {}", l);
+        }
 
         if (output.is_open()) {
           const char *cdata =
@@ -203,8 +225,8 @@ int main(int argc, char **argv) {
           output.write(cdata, ping.buffer()->size());
         }
 
-        LOG(DEBUG) << "Average intensity: "
-                   << mean_image_intensity(ping.image());
+        spdlog::debug("Average intensity: {}",
+                      mean_image_intensity(ping.image()));
 
         count++;
         if ((stopAfter > 0) && (count >= stopAfter))
@@ -213,7 +235,13 @@ int main(int argc, char **argv) {
 
   // When the _data_rx connects, send the configuration
   _data_rx.setOnConnectCallback([&]() {
-    config.dump();
+    std::vector<std::string> dump_vec;
+    config.dump(dump_vec);
+
+    for (auto const &l : dump_vec) {
+      spdlog::debug("Config: {}", l);
+    }
+
     _data_rx.sendSimpleFireMessage(config);
   });
 
@@ -237,7 +265,7 @@ int main(int argc, char **argv) {
   while (!doStop) {
     // Very rough Hz calculation right now
     const auto c = count;
-    LOG(INFO) << "Received pings at " << c - lastCount << " Hz";
+    spdlog::info("Received pings at {} Hz", c - lastCount);
 
     lastCount = c;
     sleep(1);
@@ -249,7 +277,7 @@ int main(int argc, char **argv) {
   if (output.is_open())
     output.close();
 
-  LOG(INFO) << "At exit";
+  spdlog::info("At exit");
 
   return 0;
 }
@@ -259,12 +287,12 @@ int playbackSonarFile(const std::string &filename, ofstream &output,
   shared_ptr<SonarPlayerBase> player(SonarPlayerBase::OpenFile(filename));
 
   if (!player) {
-    LOG(WARNING) << "Unable to open sonar file";
+    spdlog::warn("Unable to open sonar file {}", filename);
     return -1;
   }
 
   if (!player->open(filename)) {
-    LOG(INFO) << "Failed to open " << filename;
+    spdlog::error("Failed to open ");
     return -1;
   }
 
@@ -276,7 +304,12 @@ int playbackSonarFile(const std::string &filename, ofstream &output,
         // Pings are only sent to the callback if valid()
         // don't need to check independently
 
-        ping.dump();
+        std::vector<std::string> dump_vec;
+        ping.dump(dump_vec);
+
+        for (auto const &l : dump_vec) {
+          spdlog::debug("PingV1: {}", l);
+        }
 
         if (output.is_open()) {
           const char *cdata =
@@ -284,8 +317,8 @@ int playbackSonarFile(const std::string &filename, ofstream &output,
           output.write(cdata, ping.buffer()->size());
         }
 
-        LOG(DEBUG) << "Average intensity: "
-                   << mean_image_intensity(ping.image());
+        spdlog::info("Average intensity: {}",
+                     mean_image_intensity(ping.image()));
 
         count++;
       });
@@ -296,7 +329,12 @@ int playbackSonarFile(const std::string &filename, ofstream &output,
         // Pings are only sent to the callback if valid()
         // don't need to check independently
 
-        ping.dump();
+        std::vector<std::string> dump_vec;
+        ping.dump(dump_vec);
+
+        for (auto const &l : dump_vec) {
+          spdlog::debug("PingV2: {}", l);
+        }
 
         if (output.is_open()) {
           const char *cdata =
@@ -304,19 +342,19 @@ int playbackSonarFile(const std::string &filename, ofstream &output,
           output.write(cdata, ping.buffer()->size());
         }
 
-        LOG(DEBUG) << "Average intensity: "
-                   << mean_image_intensity(ping.image());
+        spdlog::info("Average intensity: {}",
+                     mean_image_intensity(ping.image()));
 
         count++;
       });
 
   // SimplePingResult ping;
   while (player->nextPing() && !player->eof()) {
-    LOG(DEBUG) << "Read a ping";
+    spdlog::debug("Read a ping");
     ;
   }
 
-  LOG(INFO) << count << " sonar packets decoded";
+  spdlog::info("{} sonar packets decoded", count);
 
   return 0;
 }

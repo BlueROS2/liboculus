@@ -9,10 +9,11 @@
 
   <license>BSD</license>
 
+  <depend>spdlog</depend>
+  <depend>fmt</depend>
+
   <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
   <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
-
-  <depend>g3log_ros</depend>
 
   <build_depend>boost</build_depend>
 

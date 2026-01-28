@@ -31,8 +31,8 @@
 #pragma once
 
 #include <cassert>
-#include <g3log/g3log.hpp>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -79,14 +79,16 @@ public:
     return hdr()->oculusId == OCULUS_CHECK_ID; // 0x4f53
   }
 
-  virtual void dump() const {
-    LOG(DEBUG) << "   Oculus Id: 0x" << std::hex << oculusId();
-    LOG(DEBUG) << "      Msg id: 0x" << std::hex
-               << static_cast<uint16_t>(msgId());
-    LOG(DEBUG) << " Msg Version: " << msgVersion();
-    LOG(DEBUG) << "      Dst ID: " << std::hex << dstDeviceId();
-    LOG(DEBUG) << "      Src ID: " << std::hex << srcDeviceId();
-    LOG(DEBUG) << "Payload size: " << payloadSize() << " bytes";
+  virtual std::vector<std::string> dump(std::vector<std::string> &vec) const {
+    vec.push_back(fmt::format("   Oculus Id: {:#04x}", oculusId()));
+    vec.push_back(
+        fmt::format("      Msg id: {:#04x}", static_cast<uint16_t>(msgId())));
+    vec.push_back(fmt::format(" Msg Version: {}", msgVersion()));
+    vec.push_back(fmt::format("      Dst ID: {:#04x}", dstDeviceId()));
+    vec.push_back(fmt::format("      Src ID: {:#04x}", srcDeviceId()));
+    vec.push_back(fmt::format("Payload size: {} bytes", payloadSize()));
+
+    return vec;
   }
 
   const OculusMessageHeader *hdr() const {

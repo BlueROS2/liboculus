@@ -31,8 +31,7 @@
 #pragma once
 
 #include <cassert>
-#include <g3log/g3log.hpp>
-#include <iomanip>
+#include <fmt/format.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -71,7 +70,7 @@ public:
 
   explicit SimplePingResult(const std::shared_ptr<ByteVector> &buffer);
 
-  ~SimplePingResult() {}
+  virtual ~SimplePingResult() {}
 
   const Ping_t *ping() const;
 
@@ -82,7 +81,7 @@ public:
   uint8_t dataSize() const { return SizeOfDataSize(ping()->dataSize); }
 
   bool valid() const override;
-  void dump() const override;
+  std::vector<std::string> dump(std::vector<std::string> &) const override;
 
 private:
   // Objects which create OOI overlays the _buffer for  easier interpretation
@@ -145,7 +144,7 @@ template <typename Ping_t> bool SimplePingResult<Ping_t>::valid() const {
     return false;
 
   if (!MessageHeader::valid()) {
-    LOG(WARNING) << "Header not valid";
+    // LOG(WARNING) << "Header not valid";
     return false;
   }
 
@@ -157,47 +156,65 @@ template <typename Ping_t> bool SimplePingResult<Ping_t>::valid() const {
   }
 
   if (ping()->imageSize != expected_size) {
-    LOG(WARNING) << "ImageSize in header " << ping()->imageSize
-                 << " does not match expected data size of " << expected_size;
+    // LOG(WARNING) << "ImageSize in header " << ping()->imageSize
+    //              << " does not match expected data size of " <<
+    //              expected_size;
     return false;
   }
 
-  CHECK(ping()->imageOffset > sizeof(OculusSimplePingResult));
+  assert(ping()->imageOffset > sizeof(OculusSimplePingResult));
   return true;
 }
 
-template <typename Ping_t> void SimplePingResult<Ping_t>::dump() const {
-  LOG(DEBUG) << "--------------";
-  SimpleFireMsg_t::dump();
+template <typename Ping_t>
+std::vector<std::string>
+SimplePingResult<Ping_t>::dump(std::vector<std::string> &vec) const {
+  // ostr << "--------------";
+  auto vout = SimpleFireMsg_t::dump(vec);
 
-  LOG(DEBUG) << "      Ping ID: " << this->ping()->pingId;
-  LOG(DEBUG) << "       Status: " << this->ping()->status;
-  LOG(DEBUG) << "    Ping start time: " << this->ping()->pingStartTime;
+  vout.push_back(fmt::format("          Ping ID: {}", this->ping()->pingId));
+  vout.push_back(fmt::format("           Status: {}", this->ping()->status));
+  vout.push_back(
+      fmt::format("  Ping start time: {}", this->ping()->pingStartTime));
 
-  LOG(DEBUG) << "    Frequency: " << this->ping()->frequency;
-  LOG(DEBUG) << "  Temperature: " << this->ping()->temperature;
-  LOG(DEBUG) << "     Pressure: " << this->ping()->pressure;
-  LOG(DEBUG) << "Spd of Sound used: " << this->ping()->speedOfSoundUsed;
-  LOG(DEBUG) << "    Range res: " << this->ping()->rangeResolution << " m";
+  vout.push_back(fmt::format("        Frequency: {}", this->ping()->frequency));
+  vout.push_back(
+      fmt::format("      Temperature: {}", this->ping()->temperature));
+  vout.push_back(fmt::format("         Pressure: {}", this->ping()->pressure));
+  vout.push_back(
+      fmt::format("Spd of sound used: {}", this->ping()->speedOfSoundUsed));
+  vout.push_back(
+      fmt::format(" Range resolution: {} m", this->ping()->rangeResolution));
 
   if (this->flags().getRangeAsMeters()) {
-    LOG(DEBUG) << "   Calc range: "
-               << this->ping()->rangeResolution * this->ping()->nRanges << " m";
+    vout.push_back(
+        fmt::format("   Calc range: {} m",
+                    this->ping()->rangeResolution * this->ping()->nRanges));
+    //   ostr <<
+    //              <<  << " m";
   } else {
-    LOG(DEBUG) << "   Pct range: "
-               << this->ping()->rangeResolution * this->ping()->nRanges;
+    vout.push_back(
+        fmt::format("   Pct range: {}",
+                    this->ping()->rangeResolution * this->ping()->nRanges));
   }
 
-  LOG(DEBUG) << "    Num range: " << this->ping()->nRanges;
-  LOG(DEBUG) << "    Num beams: " << this->ping()->nBeams;
-  LOG(DEBUG) << "Azimuth range: " << std::setprecision(4) << bearings().front()
-             << " - " << bearings().back();
+  vout.push_back(fmt::format("       Num ranges: {}", this->ping()->nRanges));
+  vout.push_back(fmt::format("        Num beams: {}", this->ping()->nBeams));
 
-  LOG(DEBUG) << "  Image size: " << this->ping()->imageSize;
-  LOG(DEBUG) << " Image offset: " << this->ping()->imageOffset;
-  LOG(DEBUG) << "    Data size: " << DataSizeToString(this->ping()->dataSize);
-  LOG(DEBUG) << " Message size: " << this->ping()->messageSize;
-  LOG(DEBUG) << "--------------";
+  vout.push_back(fmt::format("    Azimuth range: {} - {}", bearings().front(),
+                             bearings().back()));
+
+  vout.push_back(fmt::format("       Image size: {}", this->ping()->imageSize));
+  vout.push_back(
+      fmt::format("     Image offset: {}", this->ping()->imageOffset));
+  vout.push_back(fmt::format("        Data size: {}",
+                             DataSizeToString(this->ping()->dataSize)));
+  vout.push_back(
+      fmt::format("     Message size: {}", this->ping()->messageSize));
+
+  // ostr << "--------------";
+
+  return vec;
 }
 
 } // namespace liboculus

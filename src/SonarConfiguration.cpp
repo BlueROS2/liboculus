@@ -31,7 +31,7 @@
 #include "liboculus/SonarConfiguration.h"
 
 #include <boost/asio.hpp>
-#include <g3log/g3log.hpp>
+#include <fmt/format.h>
 #include <iomanip>
 
 #include "liboculus/Constants.h"
@@ -73,7 +73,7 @@ SonarConfiguration &SonarConfiguration::setRange(double input) {
   if (input <= 40 && input > 0) {
     _rangeInMeters = input;
   } else {
-    LOG(WARNING) << "Requested invalid range: " << input;
+    // LOG(WARNING) << "Requested invalid range: " << input;
   }
   return *this;
 }
@@ -82,7 +82,7 @@ SonarConfiguration &SonarConfiguration::setGainPercent(double input) {
   if (input <= 100 && input > 0) {
     _sfm.gainPercent = input;
   } else {
-    LOG(WARNING) << "Requested invalid gain: " << input;
+    // LOG(WARNING) << "Requested invalid gain: " << input;
   }
   return *this;
 }
@@ -91,7 +91,7 @@ SonarConfiguration &SonarConfiguration::setGamma(int input) {
   if (input <= 255 && input > 0) {
     _sfm.gammaCorrection = input;
   } else {
-    LOG(WARNING) << "Requested invalid gamma: " << input;
+    // LOG(WARNING) << "Requested invalid gamma: " << input;
   }
   return *this;
 }
@@ -204,19 +204,24 @@ void SonarConfiguration::updateFlags() const {
                (_512beams ? FlagBits::Do512Beams : 0);
 }
 
-void SonarConfiguration::dump() const {
+std::vector<std::string>
+SonarConfiguration::dump(std::vector<std::string> &vec) const {
   updateFlags();
 
-  LOG(INFO) << "\n             Flags 0x" << std::hex << std::setw(2)
-            << std::setfill('0') << static_cast<unsigned int>(_sfm.flags)
-            << std::setw(8) << "\n            Ext flags 0x" << std::setw(8)
-            << static_cast<uint32_t>(_sfm.extFlags) << std::dec << std::setw(0)
-            << "\n  send range is meters " << getSendRangeAsMeters()
-            << "\n       data size       " << DataSizeToString(getDataSize())
-            << "\n       send gain       " << getSendGain()
-            << "\n       simple return   " << getSimpleReturn()
-            << "\n       gain assistance " << getGainAssistance()
-            << "\n       use 512 beams   " << get512Beams();
+  vec.push_back(fmt::format("               Flags: {:#2x}",
+                            static_cast<unsigned int>(_sfm.flags)));
+  vec.push_back(fmt::format("           Ext Flags: {:#2x}",
+                            static_cast<uint32_t>(_sfm.extFlags)));
+  vec.push_back(
+      fmt::format("Send range as meters: {}", getSendRangeAsMeters()));
+  vec.push_back(
+      fmt::format("           Data size: {}", DataSizeToString(getDataSize())));
+  vec.push_back(fmt::format("           Send gain: {}", getSendGain()));
+  vec.push_back(fmt::format("       Simple return: {}", getSimpleReturn()));
+  vec.push_back(fmt::format("     Gain assistance: {}", getGainAssistance()));
+  vec.push_back(fmt::format("       use 512 beams: {}", get512Beams()));
+
+  return vec;
 }
 
 } // namespace liboculus

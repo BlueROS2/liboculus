@@ -1,7 +1,5 @@
 # Specify the minimum version for CMake
 cmake_minimum_required(VERSION 3.8)
-
-# Project's name
 project(liboculus)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -Wl,--no-as-needed")
@@ -13,36 +11,18 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 # ###########################################
 # The following folders will be included  #
 # ###########################################
-include_directories(
-    "${PROJECT_SOURCE_DIR}/include/"
-    "${PROJECT_SOURCE_DIR}/thirdparty/"
-)
+include_directories("${PROJECT_SOURCE_DIR}/include/")
 
 # Threading
 find_package(Threads)
+find_package(spdlog)
+find_package(fmt)
 
 # Boost
 find_package(Boost 1.57 REQUIRED COMPONENTS system)
 include_directories(${Boost_INCLUDE_DIR})
 message("Boost_INCLUDE_DIR: " ${Boost_INCLUDE_DIR})
 
-# Install g3log as an external package
-include(cmake/IncludeProject.cmake)
-
-if(NOT GIT_TAG)
-    set(GIT_TAG "2.6")
-endif()
-
-include(ExternalProject)
-ExternalProject_Add(
-    g3log
-    GIT_REPOSITORY https://github.com/KjellKod/g3log
-    GIT_TAG ${GIT_TAG}
-    INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/install/g3log"
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-)
-
-ExternalProject_Get_Property(g3log install_dir)
 include_directories(${install_dir}/include/)
 
 # #####################
@@ -53,13 +33,17 @@ link_directories(${Boost_LIBRARY_DIRS})
 # Create Library
 add_library(oculus SHARED ${oculus_SRCS})
 set_target_properties(oculus PROPERTIES LIBRARY_OUTPUT_NAME oculus)
+target_link_libraries(oculus PUBLIC fmt::fmt spdlog::spdlog)
+
+add_executable(occlient ${PROJECT_SOURCE_DIR}/tools/oculus_client.cpp)
+target_link_libraries(occlient oculus)
 
 # =============================================
 # to allow find_package()
 # =============================================
 #
 # The following is borrowed heavily from:
-#   https://github.com/RossHartley/invariant-ekf
+# https://github.com/RossHartley/invariant-ekf
 # I am responsible for all mistakes
 #
 # the following case be used in an external project requiring oculus:
@@ -102,7 +86,7 @@ configure_file(
 
 message("PROJECT_BINARY_DIR: " ${PROJECT_BINARY_DIR})
 
-# # 2- installation build #
+# 2- installation build #
 
 # Change the include location for the case of an install location
 set(oculus_include_dirs ${CMAKE_INSTALL_PREFIX}/include ${EIGEN_INCLUDE_DIR})

@@ -32,8 +32,7 @@
 
 #include <netinet/in.h>
 
-#include <g3log/g3log.hpp> // needed for CHECK macro
-#include <iostream>
+#include <cassert>
 #include <vector>
 
 #include "liboculus/DataTypes.h"

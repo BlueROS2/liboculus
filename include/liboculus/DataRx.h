@@ -156,7 +156,7 @@ private:
 template <typename FireMsg_t>
 void DataRx::sendSimpleFireMessage(const SonarConfiguration &config) {
   if (!isConnected()) {
-    LOG(WARNING) << "Can't send to sonar, not connected";
+    // LOG(WARNING) << "Can't send to sonar, not connected";
     return;
   }
 
@@ -169,10 +169,10 @@ void DataRx::sendSimpleFireMessage(const SonarConfiguration &config) {
   if (data.size() > 0) {
     try {
       auto result = _socket.send(boost::asio::buffer(data));
-      LOG(DEBUG) << "Sent " << result << " bytes to sonar";
+      // LOG(DEBUG) << "Sent " << result << " bytes to sonar";
       haveWritten(data);
     } catch (boost::system::system_error &ex) {
-      LOG(WARNING) << "Exception when sending: " << ex.what();
+      // LOG(WARNING) << "Exception when sending: " << ex.what();
       disconnect();
     }
   }

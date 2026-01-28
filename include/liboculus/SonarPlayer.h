@@ -35,7 +35,7 @@
 
 #include "liboculus/OculusMessageHandler.h"
 #include "liboculus/SimplePingResult.h"
-#include "liboculus/expected.hpp"
+#include "liboculus/thirdparty/expected.hpp"
 
 namespace liboculus {
 

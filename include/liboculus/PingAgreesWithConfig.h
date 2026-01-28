@@ -48,20 +48,20 @@ bool checkPingAgreesWithConfig(const SimplePingResult<PingT> &ping,
 
   if (config.get512Beams()) {
     if (nBeams != 512) {
-      LOG(WARNING) << "Config expects 512 beams, ping has " << nBeams;
+      // LOG(WARNING) << "Config expects 512 beams, ping has " << nBeams;
     }
   } else {
     if (nBeams != 256) {
-      LOG(WARNING) << "Config expects 256 beams, ping has " << nBeams;
+      // LOG(WARNING) << "Config expects 256 beams, ping has " << nBeams;
     }
   }
 
   // Check data size
   if (config.getDataSize() != dataSize) {
-    LOG(WARNING) << "Config expected "
-                 << 8 * SizeOfDataSize(config.getDataSize())
-                 << " bit data, data is actually "
-                 << 8 * SizeOfDataSize(dataSize) << " bit";
+    // LOG(WARNING) << "Config expected "
+    //              << 8 * SizeOfDataSize(config.getDataSize())
+    //              << " bit data, data is actually "
+    //              << 8 * SizeOfDataSize(dataSize) << " bit";
   }
 
   return true;

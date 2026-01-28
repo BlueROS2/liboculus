@@ -31,9 +31,7 @@
 #include "liboculus/SonarPlayer.h"
 
 #include <fstream>
-#include <iostream>
 
-#include "g3log/g3log.hpp"
 #include "liboculus/Constants.h"
 #include "liboculus/DataTypes.h"
 #include "liboculus/MessageHeader.h"
@@ -63,17 +61,18 @@ SonarPlayerBase::OpenFile(const std::string &filename) {
     f.get(d);
 
     if (d == 0x45) {
-      LOG(INFO)
-          << "I think this is an GPMF file, unfortunately I cannot parse GPMF";
+      // LOG(INFO)
+      //     << "I think this is an GPMF file, unfortunately I cannot parse
+      //     GPMF";
       return nullptr;
     }
 
   } else if (c == 0x53) {
-    LOG(INFO) << "I think this is an raw sonar data.";
+    // LOG(INFO) << "I think this is an raw sonar data.";
     return shared_ptr<SonarPlayerBase>(new RawSonarPlayer());
   }
 
-  LOG(INFO) << "Unable to figure out what file this is...";
+  // LOG(INFO) << "Unable to figure out what file this is...";
   return nullptr;
 }
 
@@ -93,13 +92,13 @@ bool RawSonarPlayer::nextPing() {
     _input.get(c);
     skipped_bytes++;
     if (_input.eof()) {
-      LOG(DEBUG) << "No packets before the end of the file";
+      // LOG(DEBUG) << "No packets before the end of the file";
       return false;
     }
   }
 
-  LOG_IF(INFO, skipped_bytes > 0)
-      << "Skipped " << skipped_bytes << " before reading start of header";
+  // LOG_IF(INFO, skipped_bytes > 0)
+  //     << "Skipped " << skipped_bytes << " before reading start of header";
 
   std::shared_ptr<ByteVector> buffer =
       std::make_shared<ByteVector>(sizeof(OculusMessageHeader));
@@ -110,7 +109,7 @@ bool RawSonarPlayer::nextPing() {
   if (!header.valid())
     return false;
 
-  LOG(DEBUG) << "Reading " << header.payloadSize() << " additional bytes";
+  // LOG(DEBUG) << "Reading " << header.payloadSize() << " additional bytes";
 
   // Read the rest of the data
   buffer->resize(header.packetSize());
