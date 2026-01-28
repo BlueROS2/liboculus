@@ -21,6 +21,12 @@ jobs:
           - {ROS_DISTRO: rolling}
 
     steps:
+      - name: Install dependencies with awalsh128/cache-apt-pkgs-action
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          # Need a more modern version of spdlog than provided by 20.04
+          add-repository: ppa:savoury1/backports
+
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
