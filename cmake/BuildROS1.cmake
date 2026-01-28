@@ -1,6 +1,10 @@
 # Catkin/ROS1 section =====
 find_package(Boost REQUIRED COMPONENTS system)
 
+find_package(catkin REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
+
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES liboculus
@@ -42,5 +46,6 @@ if(CATKIN_ENABLE_TESTING)
         ${catkin_LIBRARIES}
         liboculus
         Boost::system
+        spdlog::spdlog
     )
 endif()

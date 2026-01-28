@@ -16,8 +16,7 @@ jobs:
       matrix:
         env:
           - {ROS_DISTRO: noetic}
-          # We include humble because there are still 22.04 systems (Jetson) out there
-          - {ROS_DISTRO: humble}
+          - {ROS_DISTRO: jazzy}
           - {ROS_DISTRO: kilted}
           - {ROS_DISTRO: rolling}
 
