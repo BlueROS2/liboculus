@@ -3,7 +3,13 @@
 
 > [!WARNING]
 >
-> Janauary  2026.  Please note we are in a period of active development on this repo.   The previous version has been archived as [`v1.2.0`](https://github.com/apl-ocean-engineering/liboculus/tree/v1.2.0).  Going forward we expect to make breaking changes.
+> January 2026
+>
+> This is the [main/`v3` branch](https://github.com/apl-ocean-engineering/liboculus), which replaces G3Log with [`spdlog`](https://github.com/gabime/spdlog) along with other changes under the good.
+>
+> The 'v2' branch of this liboculus; with a matching 'v2' branch for [oculus_sonar_driver](https://gitlab.com/apl-ocean-engineering/oculus_sonar_driver/-/commits/v2) includes a hybrid CMakeLists.txt which can build for ROS1, ROS2 or in a plain CMake environment.  G3Log is still used as the main logger.
+>
+> The previous ROS1-only version has been archived as [`v1.2.0`](https://github.com/apl-ocean-engineering/liboculus/tree/v1.2.0).
 
 (No, sadly, not that kind of [Oculus](https://www.oculus.com/))
 
