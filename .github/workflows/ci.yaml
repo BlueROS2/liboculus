@@ -15,9 +15,11 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          - {ROS_DISTRO: noetic}
-          # We include humble because there are still 22.04 systems (Jetson) out there
-          - {ROS_DISTRO: humble}
+          # You need a more modern version of spdlog than provided
+          # by 20.04;  in development could get it from a backports PPA
+          # but can't during CI
+          #- {ROS_DISTRO: noetic}
+          - {ROS_DISTRO: jazzy}
           - {ROS_DISTRO: kilted}
           - {ROS_DISTRO: rolling}
 
