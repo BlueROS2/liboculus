@@ -27,7 +27,7 @@ jobs:
           packages: libboost-all-dev libspdlog-dev libfmt-dev
           # Need a more modern version of spdlog than provided by 20.04
           add-repository: ppa:savoury1/backports
-          version: 1.0
+          version: 1.1
 
       - name: Checkout repository
         uses: actions/checkout@v5
