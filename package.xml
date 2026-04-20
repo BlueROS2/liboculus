@@ -7,7 +7,8 @@
   <maintainer email="amarburg@uw.edu">Aaron Marburg</maintainer>
   <author email="amarburg@uw.edu">Aaron Marburg</author>
 
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
+  <license>GPLv3</license>
 
   <depend>spdlog</depend>
   <depend>fmt</depend>
