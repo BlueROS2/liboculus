@@ -1,7 +1,6 @@
-
 /*
  * Copyright (c) 2017-2025 University of Washington
- * Author: Aaron Marburg <amarburg@uw.edu>
+ * Author: Aaron Marburg
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,10 +31,13 @@
 #pragma once
 
 #include <memory>
-#include <spdlog/common.h>
+#include <mutex>
+#include <utility>
+
+#include <fmt/format.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
-#include <utility>
+#include <spdlog/version.h>
 
 namespace liboculus {
 
@@ -44,8 +46,10 @@ public:
   static std::shared_ptr<Logger> &
   get_instance(const std::shared_ptr<spdlog::logger> &logger_in = nullptr) {
     static std::shared_ptr<Logger> s_logger(init(logger_in));
+
     if ((logger_in) && (logger_in != s_logger->logger_))
       s_logger->logger_ = logger_in;
+
     return s_logger;
   }
 
@@ -67,14 +71,14 @@ public:
 private:
   static std::shared_ptr<Logger>
   init(const std::shared_ptr<spdlog::logger> &logger_in = nullptr) {
-    // Use new to access private constructor
     return std::shared_ptr<Logger>(new Logger(logger_in));
   }
 
   explicit Logger(const std::shared_ptr<spdlog::logger> &l = nullptr)
       : logger_(l) {
     if (!logger_) {
-      logger_ = std::make_shared<spdlog::logger>("liboculus");
+      logger_ = std::make_shared<spdlog::logger>(
+          "liboculus", std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
       spdlog::register_logger(logger_);
     }
   }
@@ -85,51 +89,60 @@ private:
   Logger &operator=(const Logger &) = delete;
 };
 
-// Convenience wrappers around "oclog::"
+// Convenience wrappers around logger access
 namespace oclog {
-using spdlog::format_string_t;
+
 using spdlog::source_loc;
+
+#if defined(SPDLOG_VER_MAJOR) && \
+    ((SPDLOG_VER_MAJOR > 1) || (SPDLOG_VER_MAJOR == 1 && SPDLOG_VER_MINOR >= 10))
+template <typename... Args>
+using oc_format_string_t = spdlog::format_string_t<Args...>;
+#else
+template <typename... Args>
+using oc_format_string_t = fmt::format_string<Args...>;
+#endif
 
 template <typename... Args>
 inline void log(source_loc source, spdlog::level::level_enum lvl,
-                format_string_t<Args...> fmt, Args &&...args) {
+                oc_format_string_t<Args...> fmt, Args &&...args) {
   Logger::get_logger()->log(source, lvl, fmt, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void log(spdlog::level::level_enum lvl, format_string_t<Args...> fmt,
+inline void log(spdlog::level::level_enum lvl, oc_format_string_t<Args...> fmt,
                 Args &&...args) {
   Logger::get_logger()->log(source_loc{}, lvl, fmt,
                             std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void trace(format_string_t<Args...> fmt, Args &&...args) {
+inline void trace(oc_format_string_t<Args...> fmt, Args &&...args) {
   Logger::get_logger()->trace(fmt, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void debug(format_string_t<Args...> fmt, Args &&...args) {
+inline void debug(oc_format_string_t<Args...> fmt, Args &&...args) {
   Logger::get_logger()->debug(fmt, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void info(format_string_t<Args...> fmt, Args &&...args) {
+inline void info(oc_format_string_t<Args...> fmt, Args &&...args) {
   Logger::get_logger()->info(fmt, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void warn(format_string_t<Args...> fmt, Args &&...args) {
+inline void warn(oc_format_string_t<Args...> fmt, Args &&...args) {
   Logger::get_logger()->warn(fmt, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void error(format_string_t<Args...> fmt, Args &&...args) {
+inline void error(oc_format_string_t<Args...> fmt, Args &&...args) {
   Logger::get_logger()->error(fmt, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
-inline void critical(format_string_t<Args...> fmt, Args &&...args) {
+inline void critical(oc_format_string_t<Args...> fmt, Args &&...args) {
   Logger::get_logger()->critical(fmt, std::forward<Args>(args)...);
 }
 
@@ -143,6 +156,7 @@ template <typename T>
 inline void log(spdlog::level::level_enum lvl, const T &msg) {
   Logger::get_logger()->log(lvl, msg);
 }
+
 } // namespace oclog
 
 } // namespace liboculus
