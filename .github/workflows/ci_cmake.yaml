@@ -16,11 +16,15 @@ jobs:
       - name: Install dependencies with awalsh128/cache-apt-pkgs-action
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libboost-all-dev libspdlog-dev libfmt-dev
+          packages: \
+            libasio-dev \
+            libboost-system-dev \
+            libfmt-dev
+            libspdlog-dev \
           version: 1.0
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 

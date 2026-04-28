@@ -1,4 +1,4 @@
-ARG UBUNTU_VERSION=focal
+ARG UBUNTU_VERSION=noble
 
 #====================================================================
 # Preliminary image with dependencies
@@ -10,15 +10,17 @@ FROM ubuntu:${UBUNTU_VERSION} AS deps
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
-    cmake \
-    gcc \
-    git \
-    libboost1.71-all-dev \
-    python3 \
-    python3-apt \
-    python3-distutils \
-    python3-pip \
-    python-is-python3 \
+      cmake \
+      gcc \
+      git \
+      libasio-dev \
+      libboost-system-dev \
+      libfmt-dev \
+      libspdlog-dev \
+      python-is-python3 \
+      python3 \
+      python3-apt \
+      python3-pip \
     && apt autoremove -y \
     && apt clean -y \
     && rm -rf /var/lib/apt/lists/*
@@ -30,16 +32,13 @@ RUN apt-get update && apt-get install -y \
 #====================================================================
 FROM deps as ci
 
-## ~~ Create non-root user ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ARG USERNAME=apl
+# On more recent Ubuntu base images, a non-root
+# user "ubuntu" already exists
+ARG USERNAME=ubuntu
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
-RUN groupadd --gid $USER_GID $USERNAME \
-  && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-  #
-  # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
-  && apt-get update \
+RUN apt-get update \
   && apt-get install -y sudo \
   && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
   && chmod 0440 /etc/sudoers.d/$USERNAME
@@ -62,16 +61,3 @@ ARG LIBOCULUS_BRANCH=main
 RUN echo "Cloning from ${LIBOCULUS_BRANCH} branch ${LIBOCULUS_ROS_REPO}"
 
 RUN git clone --depth 1 -b ${LIBOCULUS_BRANCH} ${LIBOCULUS_REPO}
-
-#====================================================================
-# Final image with built fips package
-#====================================================================
-# dockerfile_lint - ignore
-FROM git_checkout as liboculus
-
-ARG WS_DIR
-LABEL Version=0.1
-LABEL Name=arena_camera_ros
-
-WORKDIR ${WS_DIR}/liboculus
-RUN ./fips build

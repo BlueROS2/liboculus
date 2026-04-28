@@ -15,53 +15,55 @@
 
 # liboculus
 
+(No, sadly, not that kind of [Oculus](https://www.oculus.com/))
+
+
 > [!WARNING]
 >
 > January 2026
 >
-> This is the [main/`v3` branch](https://github.com/BlueROS2/liboculus), which replaces G3Log with [`spdlog`](https://github.com/gabime/spdlog) along with other changes under the good.
+> This is forked from the [main "v3" branch](https://github.com/apl-ocean-engineering/liboculus), in which G3Log has been replaced with [`spdlog`](https://github.com/gabime/spdlog).  It also includes other formatting and restructuring changes under the hood.   When in doubt, start here.  It builds in ROS1 or ROS2 workspaces, and in a plain CMake environment.
 >
-> The 'v2' branch of this liboculus; with a matching 'v2' branch for [oculus_sonar_driver](https://gitlab.com/apl-ocean-engineering/oculus_sonar_driver/-/commits/v2) includes a hybrid CMakeLists.txt which can build for ROS1, ROS2 or in a plain CMake environment.  G3Log is still used as the main logger.
+> The "v2" branch of this repo, along with the matching "v2" branch for [oculus_sonar_driver](https://gitlab.com/apl-ocean-engineering/oculus_sonar_driver/-/commits/v2) uses G3Log for logging.   It also includes the hybrid `CMakeLists.txt` for ROS1, ROS2 and CMake.
 >
 > The previous ROS1-only version has been archived as [`v1.2.0`](https://github.com/BlueROS2/liboculus/tree/v1.2.0).
 
-(No, sadly, not that kind of [Oculus](https://www.oculus.com/))
+This library can:
 
-This library contains code for:
-
-  - Communicating with a [Blueprint Subsea Oculus](https://www.blueprintsubsea.com/oculus/index.php) imaging sonar over
+  - Communicate with a [Blueprint Subsea Oculus](https://www.blueprintsubsea.com/oculus/index.php) imaging sonar over
     its ethernet interface.
-  - Requesting that the sonar start pinging.
-  - Decoding and parsing fields from the resulting ping messages from the sonar.
-  - Loading and parsing sonar data recorded as either:
-    - Raw streams of binary packets.
-    - **Note:** This repo includes scaffold code for reading `.oculus` files saved from the Blueprint GUI, but that format is proprietary and undocumented. **We cannot parse `.oculus` files!!**
-
-This package is designed to build in both ROS1 (catkin) and ROS2 (colcon) environments, however it contains no ROS-specific code and could be integrated into other non-ROS environments with some work.  
-
-It also contains the options to build a "bare" library with `cmake`.
+  - Request that the sonar start pinging.
+  - Decode and parse fields from the resulting ping messages from the sonar.
+  - Load and parse sonar data recorded as raw streams of binary packets.
 
 The library contains no special provisions for *saving* sonar data,
 but it's straightforward to write packets as a raw binary stream
 (which the library can read) -- see [`tools/oculus_client.cpp`](https://github.com/BlueROS2/liboculus/blob/main/tools/oculus_client.cpp) for an example.
 
+**liboculus cannot parse `.oculus` files saved from Blueprint's software.**
 
 ---
+## Dependencies
+
+In any of the environments, this package require `spdlog`, `fmt` and `boost::asio`
+
+In ROS environments these can be installed automatically with `rosdep`.
+
+On recent Ubuntu distros, the dependencies can be also installed with:
+
+```
+sudo apt install -y libfmt-dev libspdlog-dev libasio-dev libboost-system-dev
+```
+
+A recent `spdlog` is required, this package will not build with the version of spdlog in Ubuntu 20.04.
+
 ## Build/Installation
 
-This is a hybrid repository which builds in either ROS1 or ROS2, though there are no ROS dependencies in the code.
-
-We hope the code is still useful for others looking to talk to the Oculus.
-
-The (optional) test suite also requires Googletest and the (also optional)
-binary `oc_client` requires [CLI11](https://github.com/CLIUtils/CLI11).
-
-Internally, the ethernet interface uses
-[Boost::asio](https://www.boost.org/doc/libs/1_66_0/doc/html/boost_asio.html).
+This is a hybrid repository which will build in either ROS1 or ROS2 workspaces, though there are no ROS dependencies in the code.
 
 ## Build with cmake
 
-This package can be built with the standard cmake process:
+This package can also be built with the standard cmake process:
 
 ```
 mkdir build && cd build
@@ -69,16 +71,13 @@ cmake ..
 make
 ```
 
-Note the `CMakelists.txt` attempts to auto-detect ROS.  Cmake build should be done in a session where ROS has not been loaded.
+`CMakelists.txt` attempts to auto-detect ROS.  Cmake builds should be done in an environment where ROS has not been loaded (there are no `ROS_*` environment variables).
 
 ## Logging
 
-> [!NOTE] [fips](http://floooh.github.io/fips/) support has been removed from this version.
-> [!NOTE] The dependency on [g3log](https://github.com/KjellKod/g3log) has been removed.
+Internally the library uses [spdlog](https://github.com/gabime/spdlog).  The library's logger does not have any registered sinks by default and will not output to the console.
 
-Internally the library uses [spdlog](https://github.com/gabime/spdlog).  By default logger `"liboculus"` does not have any registered sinks and does not output to the console.
-
-If the calling application uses spdlog, either the library's logger can be reset:
+If the calling application uses `spdlog`, either the library's logger can be reset to the default logger:
 
 ```
 liboculus::Logger::set_logger( spdlog::default_logger() );
@@ -90,9 +89,19 @@ or a sink can be added to the library's logger:
 auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt >();  liboculus::Logger::add_sink( stdout_sink );
 ```
 
+### Fetching `spdlog` and `fmt` to avoid dependencies
 
+Export the `FETCH_SPDLOG` variable to download and build static libraries for `spdlog` and `fmt`:
 
-
+```
+$ export FETCH_SPDLOG=1
+$ cmake ../ # In build directory
+[...]
+-- {fmt} version: 12.1.0
+-- Build type:
+-- Build spdlog: 1.17.0
+[...]
+```
 
 ---
 ## oc_client binary
@@ -133,30 +142,30 @@ The client must implement callbacks that will handle data from the sonar ([for e
 This library makes liberal use of overlay classes in order to provide
 zero-copy accessor functions into the raw data chunks received from
 the oculus.  These classes overlay the struct hierarchy defined in
-`include/liboculus/thirdparty/Oculus/Oculus.h`, making it possible to directly cast between the types depending on which accessors you want to use:
-* OculusSimplePingResult carries all image data from the oculus.
-* Its first field is the OculusSimpleFireMessage that triggered data collection
-* In turn, the first field of the OculusSimpleFireMessage is an OculusMessageHeader
+[Oculus.h](include/liboculus/thirdparty/Oculus/Oculus.h), making it possible to directly cast between the types depending on which accessors you want to use:
+* `OculusSimplePingResult` carries all image data from the oculus.
+* Its first field is the `OculusSimpleFireMessage` that triggered data collection
+* In turn, the first field of the `OculusSimpleFireMessage` is an `OculusMessageHeader`
 
 So, in our code:
-* MessageHeader (SimplePingResult.h)
-  * Overlays OculusMessageHeader (there exist an accessor function that returns the original Oculus type)
+* `MessageHeader` ([SimplePingResult.h](include/liboculus/SimplePingResult.h))
+  * Overlays `OculusMessageHeader` (there exists an accessor function that returns the original Oculus type)
   * However, it contains a buffer that will accept the full message payload, which is then used by other classes that provide accessors.
-* SimplePingResult (SimplePingResult.{h,cpp}) overlays the OculusSimplePingResult.
-  * SimplePingResult subclasses MessageHeader
-  * Overlays both OculusSimpleFireMessage and OculusSimplePingResult (there are accessor functions that cast it to either)
-  * It has instances of two other overlay classes, BearingData and ImageData.
-* BearingData (BearingData.h) TODO: I'm still confused by how this one actually gets the bearings.
-* ImageData (ImageData.h) overlays the buffer in a SimplePingResult, using OculusSimpleFireMessage.imageOffset to index into the buffer at the correct spot.
+* `SimplePingResult` (SimplePingResult.{h,cpp}) overlays the `OculusSimplePingResult`.
+  * `SimplePingResult` subclasses `MessageHeader`
+  * Overlays both `OculusSimpleFireMessage` and `OculusSimplePingResult` (there are accessor functions that cast it to either)
+  * It has instances of two other overlay classes, `BearingData` and `ImageData`.
+* `BearingData` ([BearingData.h](include/liboculus/BearingData.h))
+* `ImageData` ([ImageData.h](include/liboculus/ImageData.h)) overlays the buffer in a SimplePingResult, using OculusSimpleFireMessage.imageOffset to index into the buffer at the correct spot.
 
 
 Other files/classes:
-* DataTypes.h: Utility conversions for enums defined in Oculus.h
+* [DataTypes.h](include/liboculus/DataTypes.h): Utility conversions for enums defined in [Oculus.h](include/liboculus/thirdparty/Oculus/Oculus.h)
 
-* StatusRx: Connects to the fixed status port; stuffs messages into a SonarStatus and calls SonarClient's callback with the SonarStatus.
-* SonarStatus: Wrapper around OculusStatusMsg. Only used to dump it to LOG(DEBUG), so I'd like to see it disappear in favor of a log_status helper function.
+* [StatusRx](include/liboculus/StatusRx.h): Connects to the broadcast status port; copies received messages into a SonarStatus and calls SonarClient's callback with the SonarStatus.
+* [SonarStatus](include/liboculus/SonarStatus.h): Wrapper around OculusStatusMsg. Only used to dump it to LOG(DEBUG), so I'd like to see it disappear in favor of a log_status helper function.
 
-* IoServiceThread: thin wrapper which runs a [`boost::asio::io_context`](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/io_context.html) within a thread.  Used by both StatusRx and DataRx
+* [IoServiceThread](include/liboculus/IoServiceThread.h): thin wrapper which runs a [`boost::asio::io_context`](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/io_context.html) within a thread.  Used by both StatusRx and DataRx
 
 ----
 # Related Packages
