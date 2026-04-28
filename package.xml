@@ -4,8 +4,12 @@
   <version>3.0.0</version>
   <description>A ROS version of the Oculus sonar codebase</description>
 
-  <maintainer email="amarburg@uw.edu">Aaron Marburg</maintainer>
+  <maintainer email="fredrik@mantaeng.dk">Fredrik Fogh Sørensen (BlueROS2 fork)</maintainer>
   <author email="amarburg@uw.edu">Aaron Marburg</author>
+
+  <url type="website">https://github.com/BlueROS2/liboculus</url>
+  <url type="repository">https://github.com/BlueROS2/liboculus</url>
+  <url type="bugtracker">https://github.com/BlueROS2/liboculus/issues</url>
 
   <license>BSD-3-Clause</license>
   <license>GPLv3</license>

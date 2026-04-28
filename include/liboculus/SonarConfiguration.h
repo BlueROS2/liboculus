@@ -55,6 +55,8 @@ public:
   SonarConfiguration &setGainPercent(double input);
   SonarConfiguration &setFlags(uint8_t flags);
   SonarConfiguration &setWaterTemperature(double degC);
+  SonarConfiguration &setSalinity(double ppt);
+  SonarConfiguration &setSpeedOfSound(double mps);
 
   SonarConfiguration &setFreqMode(OculusFreqMode input);
   OculusFreqMode getFreqMode() const {

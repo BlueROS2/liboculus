@@ -15,17 +15,15 @@ jobs:
       fail-fast: false
       matrix:
         env:
-          # You need a more modern version of spdlog than provided
-          # by 20.04;  in development could get it from a backports PPA
-          # but can't during CI
-          #- {ROS_DISTRO: noetic}
+          # Humble is the primary BlueROS2 target (Ubuntu 22.04)
+          - {ROS_DISTRO: humble}
+          # Secondary: test against newer distros as well
           - {ROS_DISTRO: jazzy}
-          - {ROS_DISTRO: kilted}
           - {ROS_DISTRO: rolling}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 

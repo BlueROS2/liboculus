@@ -1,3 +1,20 @@
+<p align="center">
+  <img src="docs/assets/blueros2_banner.png" alt="BlueROS2 banner" width="900" />
+</p>
+<p align="center">
+<a href="https://docs.ros.org/en/humble/index.html"><img alt="ROS 2 Humble" src="https://img.shields.io/badge/ROS%202-Humble-blue"></a>
+<a href="./LICENSE"><img alt="License BSD-3" src="https://img.shields.io/badge/License-BSD--3--Clause-yellow"></a>
+<a href="https://github.com/BlueROS2/liboculus/actions/workflows/ci.yaml"><img alt="CI" src="https://github.com/BlueROS2/liboculus/actions/workflows/ci.yaml/badge.svg"></a>
+</p>
+
+> **BlueROS2 fork** — This is the [BlueROS2](https://github.com/BlueROS2) maintained fork of
+> [`apl-ocean-engineering/liboculus`](https://github.com/apl-ocean-engineering/liboculus),
+> used as a dependency of [`blueros2_oculus_m3000d`](https://github.com/BlueROS2/blueros2_oculus_m3000d).
+> The fork tracks the upstream `main` (v3) branch and applies BlueROS2-specific packaging.
+> For general-purpose use, prefer the upstream repository.
+
+---
+
 
 # liboculus
 
@@ -5,11 +22,11 @@
 >
 > January 2026
 >
-> This is the [main/`v3` branch](https://github.com/apl-ocean-engineering/liboculus), which replaces G3Log with [`spdlog`](https://github.com/gabime/spdlog) along with other changes under the good.
+> This is the [main/`v3` branch](https://github.com/BlueROS2/liboculus), which replaces G3Log with [`spdlog`](https://github.com/gabime/spdlog) along with other changes under the good.
 >
 > The 'v2' branch of this liboculus; with a matching 'v2' branch for [oculus_sonar_driver](https://gitlab.com/apl-ocean-engineering/oculus_sonar_driver/-/commits/v2) includes a hybrid CMakeLists.txt which can build for ROS1, ROS2 or in a plain CMake environment.  G3Log is still used as the main logger.
 >
-> The previous ROS1-only version has been archived as [`v1.2.0`](https://github.com/apl-ocean-engineering/liboculus/tree/v1.2.0).
+> The previous ROS1-only version has been archived as [`v1.2.0`](https://github.com/BlueROS2/liboculus/tree/v1.2.0).
 
 (No, sadly, not that kind of [Oculus](https://www.oculus.com/))
 
@@ -29,7 +46,7 @@ It also contains the options to build a "bare" library with `cmake`.
 
 The library contains no special provisions for *saving* sonar data,
 but it's straightforward to write packets as a raw binary stream
-(which the library can read) -- see [`tools/oculus_client.cpp`](https://github.com/apl-ocean-engineering/liboculus/blob/main/tools/oculus_client.cpp) for an example.
+(which the library can read) -- see [`tools/oculus_client.cpp`](https://github.com/BlueROS2/liboculus/blob/main/tools/oculus_client.cpp) for an example.
 
 
 ---
@@ -109,12 +126,12 @@ streams of sonar packets, and can be opened by `oc_client`.
 
 ## Library Design
 
-See [oc_client](https://github.com/apl-ocean-engineering/liboculus/blob/main/tools/oculus_client.cpp) as a sample non-ROS client.   A typical client will have instances of two interface classes.  Both use Boost::Asio for network IO and must be given an [`boost::asio::io_context`](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/io_context.html) on construction.
+See [oc_client](https://github.com/BlueROS2/liboculus/blob/main/tools/oculus_client.cpp) as a sample non-ROS client.   A typical client will have instances of two interface classes.  Both use Boost::Asio for network IO and must be given an [`boost::asio::io_context`](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/io_context.html) on construction.
 
-* [DataRx](https://github.com/apl-ocean-engineering/liboculus/blob/main/include/liboculus/DataRx.h) receives packets from the sonar, calling a callback function for each ping.
-* [StatusRx](https://github.com/apl-ocean-engineering/liboculus/blob/main/include/liboculus/StatusRx.h) monitors the UDP broadcast-based protocol used to autodetect sonars on the network.   On receiving a good sonar status, it calls a callback.
+* [DataRx](https://github.com/BlueROS2/liboculus/blob/main/include/liboculus/DataRx.h) receives packets from the sonar, calling a callback function for each ping.
+* [StatusRx](https://github.com/BlueROS2/liboculus/blob/main/include/liboculus/StatusRx.h) monitors the UDP broadcast-based protocol used to autodetect sonars on the network.   On receiving a good sonar status, it calls a callback.
 
-The client must implement callbacks that will handle data from the sonar ([for example](https://github.com/apl-ocean-engineering/liboculus/blob/438f34a469eaf0d495ea515e86290b39cf965a20/tools/oculus_client.cpp#L131)) -- independent callbacks must be defined for the Oculus V1 and V2 packets.   DataRx also has a [callback on successful connection with a sonar](https://github.com/apl-ocean-engineering/liboculus/blob/438f34a469eaf0d495ea515e86290b39cf965a20/tools/oculus_client.cpp#L181) which can be used to send a configuration to the sonar (this will start the sonar pinging).
+The client must implement callbacks that will handle data from the sonar ([for example](https://github.com/BlueROS2/liboculus/blob/438f34a469eaf0d495ea515e86290b39cf965a20/tools/oculus_client.cpp#L131)) -- independent callbacks must be defined for the Oculus V1 and V2 packets.   DataRx also has a [callback on successful connection with a sonar](https://github.com/BlueROS2/liboculus/blob/438f34a469eaf0d495ea515e86290b39cf965a20/tools/oculus_client.cpp#L181) which can be used to send a configuration to the sonar (this will start the sonar pinging).
 
 This library makes liberal use of overlay classes in order to provide
 zero-copy accessor functions into the raw data chunks received from

@@ -87,6 +87,18 @@ SonarConfiguration &SonarConfiguration::setGainPercent(double input) {
   return *this;
 }
 
+SonarConfiguration &SonarConfiguration::setSalinity(double ppt) {
+  _sfm.salinity = (ppt >= 0.0) ? ppt : 0.0;
+  return *this;
+}
+
+// Set speed of sound in m/s.  Pass 0.0 to let the sonar calculate
+// internally from the salinity value.
+SonarConfiguration &SonarConfiguration::setSpeedOfSound(double mps) {
+  _sfm.speedOfSound = (mps > 0.0) ? mps : 0.0;
+  return *this;
+}
+
 SonarConfiguration &SonarConfiguration::setGamma(int input) {
   if (input <= 255 && input > 0) {
     _sfm.gammaCorrection = input;

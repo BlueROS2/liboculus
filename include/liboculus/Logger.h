@@ -94,8 +94,9 @@ namespace oclog {
 
 using spdlog::source_loc;
 
-#if defined(SPDLOG_VER_MAJOR) && \
-    ((SPDLOG_VER_MAJOR > 1) || (SPDLOG_VER_MAJOR == 1 && SPDLOG_VER_MINOR >= 10))
+#if defined(SPDLOG_VER_MAJOR) &&                                               \
+    ((SPDLOG_VER_MAJOR > 1) ||                                                 \
+     (SPDLOG_VER_MAJOR == 1 && SPDLOG_VER_MINOR >= 10))
 template <typename... Args>
 using oc_format_string_t = spdlog::format_string_t<Args...>;
 #else
