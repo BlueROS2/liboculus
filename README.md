@@ -1,7 +1,4 @@
 <p align="center">
-  <img src="docs/assets/blueros2_banner.png" alt="BlueROS2 banner" width="900" />
-</p>
-<p align="center">
 <a href="https://docs.ros.org/en/humble/index.html"><img alt="ROS 2 Humble" src="https://img.shields.io/badge/ROS%202-Humble-blue"></a>
 <a href="./LICENSE"><img alt="License BSD-3" src="https://img.shields.io/badge/License-BSD--3--Clause-yellow"></a>
 <a href="https://github.com/BlueROS2/liboculus/actions/workflows/ci.yaml"><img alt="CI" src="https://github.com/BlueROS2/liboculus/actions/workflows/ci.yaml/badge.svg"></a>
